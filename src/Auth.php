@@ -59,10 +59,10 @@ final /* static */ class Auth
     /**
      * Parse authorization.
      * @param  string $input
-     * @param  bool   $decodeCredentials
+     * @param  bool   $decodeBasicCredentials
      * @return array
      */
-    public static function parseAuthorization(string $input, bool $decodeCredentials = false): array
+    public static function parseAuthorization(string $input, bool $decodeBasicCredentials = true): array
     {
         // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization
         // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authorization
@@ -81,7 +81,8 @@ final /* static */ class Auth
         $credentials =@ $matches[2] ?: null;
 
         // basic authorizations only, normally..
-        if ($decodeCredentials && $credentials != null) {
+        if ($decodeBasicCredentials && $type != null && $credentials != null
+            && strtolower($type) == 'basic') {
             $credentials = base64_decode($credentials);
         }
 
