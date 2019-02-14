@@ -24,14 +24,13 @@
  */
 declare(strict_types=1);
 
-namespace Froq\Auth;
+namespace froq\auth;
 
 /**
- * @package    Froq
- * @subpackage Froq\Auth
- * @object     Froq\Auth\AuthException
- * @author     Kerem Güneş <k-gun@mail.com>
- * @since      3.0
+ * @package froq\auth
+ * @object  froq\auth\AuthException
+ * @author  Kerem Güneş <k-gun@mail.com>
+ * @since   3.0
  */
 final class AuthException extends \Exception
 {}
