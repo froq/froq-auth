@@ -8,8 +8,7 @@
         {"name": "Kerem Güneş", "email": "k-gun@mail.com"}
     ],
     "require": {
-        "php": "^7.2",
-        "froq/froq-exception": "^1.0"
+        "php": "^7.2"
     },
     "autoload": {
         "classmap": ["src/"]
