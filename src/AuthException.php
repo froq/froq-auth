@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace froq\auth;
 
 /**
+ * Auth exception.
  * @package froq\auth
  * @object  froq\auth\AuthException
  * @author  Kerem Güneş <k-gun@mail.com>

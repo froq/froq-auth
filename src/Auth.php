@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace froq\auth;
 
 /**
+ * Auth.
  * @package froq\auth
  * @object  froq\auth\Auth
  * @author  Kerem Güneş <k-gun@mail.com>
