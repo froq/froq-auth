@@ -62,10 +62,10 @@ final class Auth implements Stringable
 
     /**
      * Constructor.
-     * @param string $type
-     * @param array  $credentials
+     * @param  string $type
+     * @param  array  $credentials
      * @throws froq\auth\AuthException If credentials is empty.
-     * @since 4.0
+     * @since  4.0
      */
     public function __construct(string $type, array $credentials)
     {
