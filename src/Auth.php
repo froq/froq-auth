@@ -124,7 +124,7 @@ final class Auth implements Stringable
      * @param  bool   $decodeBasicCredentials
      * @return array<string, string|null>
      */
-    public static function parse(string $input, bool $decodeBasicCredentials = false): array
+    public static function parse(string $input, bool $decodeBasicCredentials = true): array
     {
         // Resources;
         // @link https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization
@@ -162,7 +162,7 @@ final class Auth implements Stringable
      * @return froq\auth\Auth
      * @since  4.0
      */
-    public static final function parseAuth(string $input, bool $decodeBasicCredentials = false): Auth
+    public static final function parseAuth(string $input, bool $decodeBasicCredentials = true): Auth
     {
         [$type, $credentials] = self::parse($input, $decodeBasicCredentials);
 
