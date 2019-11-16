@@ -26,12 +26,14 @@ declare(strict_types=1);
 
 namespace froq\auth;
 
+use froq\Exception;
+
 /**
- * Auth exception.
+ * Auth Exception.
  * @package froq\auth
  * @object  froq\auth\AuthException
  * @author  Kerem Güneş <k-gun@mail.com>
  * @since   3.0
  */
-final class AuthException extends \Exception
+final class AuthException extends Exception
 {}

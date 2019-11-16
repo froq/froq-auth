@@ -26,6 +26,9 @@ declare(strict_types=1);
 
 namespace froq\auth;
 
+use froq\auth\AuthException;
+use froq\interfaces\Stringable;
+
 /**
  * Auth.
  * @package froq\auth
@@ -33,59 +36,140 @@ namespace froq\auth;
  * @author  Kerem Güneş <k-gun@mail.com>
  * @since   3.0
  */
-final /* static */ class Auth
+final class Auth implements Stringable
 {
     /**
-     * Get authorization type.
-     * @param  string $input
-     * @return ?string
+     * Types.
+     * @const string
+     * @since 4.0
      */
-    public static function getAuthorizationType(string $input): ?string
+    public const TYPE_BASIC  = 'Basic',
+                 TYPE_BEARER = 'Bearer',
+                 TYPE_DIGEST = 'Digest',
+                 TYPE_OAUTH  = 'OAuth';
+
+    /**
+     * Type.
+     * @var string
+     */
+    private string $type;
+
+    /**
+     * Credentials.
+     * @var array<string, string|null>
+     */
+    private array $credentials;
+
+    /**
+     * Constructor.
+     * @param string $type
+     * @param array  $credentials
+     * @throws froq\auth\AuthException If credentials is empty.
+     * @since 4.0
+     */
+    public function __construct(string $type, array $credentials)
     {
-        return self::parseAuthorization($input, false)[0];
+        if ($credentials == null) {
+            throw new AuthException('Empty credentials not allowed');
+        }
+
+        $this->type = $type;
+        $this->credentials = $credentials;
     }
 
     /**
-     * Get authorization credentials.
-     * @param  string $input
-     * @param  bool   $decode
-     * @return ?string
+     * Type.
+     * @return string
+     * @since  4.0
      */
-    public static function getAuthorizationCredentials(string $input, bool $decode = false): ?string
+    public function type(): string
     {
-        return self::parseAuthorization($input, $decode)[1];
+        return $this->type;
     }
 
     /**
-     * Parse authorization.
+     * Credentials.
+     * @return array
+     * @since  4.0
+     */
+    public function credentials(): array
+    {
+        return $this->credentials;
+    }
+
+    /**
+     * @inheritDoc froq\interfaces\Stringable
+     * @since      4.0
+     */
+    public function toString(): string
+    {
+        $ret = $this->type;
+
+        if (ucfirst(strtolower($this->type)) == self::TYPE_BASIC) {
+            $credentials = $this->credentials[0];
+            if (isset($this->credentials[1])) {
+                $credentials .= ':'. $this->credentials[1];
+            }
+            $ret .= ' '. base64_encode($credentials);
+        } else {
+            $ret .= ' '. $this->credentials[0];
+        }
+
+        return $ret;
+    }
+
+    /**
+     * Parse.
      * @param  string $input
      * @param  bool   $decodeBasicCredentials
      * @return array
      */
-    public static function parseAuthorization(string $input, bool $decodeBasicCredentials = true): array
+    public static function parse(string $input, bool $decodeBasicCredentials = false): array
     {
-        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization
-        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authorization
+        // Resources;
+        // @link https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization
+        // @link https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authorization
+        // available types;
+        // @link https://www.iana.org/assignments/http-authschemes/http-authschemes.xhtml
+        // @link https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-auth-using-authorization-header.html
 
-        // all accepted
-        // $input = 'YWxhZGRpbjpvcGVuc2VzYW1l';
-        // $input = 'Authorization: YWxhZGRpbjpvcGVuc2VzYW1l';
-        // $input = 'Authorization: Basic YWxhZGRpbjpvcGVuc2VzYW1l';
+        // All accepted;
+        // 'YWxhZGRpbjpvcGVuc2VzYW1l'
+        // 'Authorization: YWxhZGRpbjpvcGVuc2VzYW1l'
+        // 'Authorization: Basic YWxhZGRpbjpvcGVuc2VzYW1l'
         preg_match('~
             (?:(?:Proxy-)?Authorization\s*:\s*)? # header name
             (?:([\w-]+)\s+)?                     # type (not given everytime)
-            (?:([^\s]+))                         # credentials
-        ~ix', trim($input), $matches);
+            (?:(.+)$)                            # credentials
+        ~ix', trim($input), $match);
 
-        $type =@ $matches[1] ?: null;
-        $credentials =@ $matches[2] ?: null;
+        $type = ($match[1] ?? '') ?: null;
+        $credentials = ($match[2] ?? '') ?: null;
 
-        // basic authorizations only, normally..
-        if ($decodeBasicCredentials && $type != null && $credentials != null
-            && strtolower($type) == 'basic') {
+        // Basic authorizations only, normally..
+        if ($decodeBasicCredentials && $credentials != null && $type != null &&
+            ucfirst(strtolower($type)) == self::TYPE_BASIC) {
             $credentials = base64_decode($credentials);
         }
 
         return [$type, $credentials];
+    }
+
+    /**
+     * Parse auth.
+     * @param  string $input
+     * @param  bool   $decodeBasicCredentials
+     * @return froq\auth\Auth
+     * @since  4.0
+     */
+    public static final function parseAuth(string $input, bool $decodeBasicCredentials = false): Auth
+    {
+        [$type, $credentials] = self::parse($input, $decodeBasicCredentials);
+
+        if ($credentials != null && strchr($credentials, ':') != false) {
+            $credentials = explode(':', $credentials, 2);
+        }
+
+        return new Auth((string) $type, (array) $credentials);
     }
 }

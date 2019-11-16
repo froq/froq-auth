@@ -1,14 +1,14 @@
 {
     "name": "froq/froq-auth",
     "homepage": "https://github.com/froq/froq-auth",
-    "description": "Auth module for Froq!",
+    "description": "Froq! Auth.",
     "keywords": ["froq", "auth"],
     "license": "MIT",
     "authors": [
         {"name": "Kerem Güneş", "email": "k-gun@mail.com"}
     ],
     "require": {
-        "php": "^7.2"
+        "php": "^7.4"
     },
     "autoload": {
         "classmap": ["src/"]
