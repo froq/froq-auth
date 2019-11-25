@@ -50,13 +50,15 @@ final class Auth implements Stringable
 
     /**
      * Type.
-     * @var string
+     * @var   string
+     * @since 4.0
      */
     private string $type;
 
     /**
      * Credentials.
-     * @var array<string, string|null>
+     * @var   array<string, string|null>
+     * @since 4.0
      */
     private array $credentials;
 
