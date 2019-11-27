@@ -57,7 +57,7 @@ final class Auth implements Stringable
 
     /**
      * Credentials.
-     * @var   array<string, string|null>
+     * @var   array<string,string|null>
      * @since 4.0
      */
     private array $credentials;
@@ -124,7 +124,7 @@ final class Auth implements Stringable
      * Parse.
      * @param  string $input
      * @param  bool   $decodeBasicCredentials
-     * @return array<string, string|null>
+     * @return array<string,string|null>
      */
     public static function parse(string $input, bool $decodeBasicCredentials = true): array
     {
