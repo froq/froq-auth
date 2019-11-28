@@ -26,8 +26,8 @@ declare(strict_types=1);
 
 namespace froq\auth;
 
-use froq\auth\AuthException;
 use froq\interfaces\Stringable;
+use froq\auth\AuthException;
 
 /**
  * Auth.
@@ -57,46 +57,111 @@ final class Auth implements Stringable
 
     /**
      * Credentials.
-     * @var   array<string,string|null>
+     * @var   array<string,string>
      * @since 4.0
      */
     private array $credentials;
 
     /**
      * Constructor.
-     * @param  string $type
-     * @param  array  $credentials
-     * @throws froq\auth\AuthException If credentials is empty.
+     * @param  string|null               $type
+     * @param  array<string,string>|null $credentials
      * @since  4.0
      */
-    public function __construct(string $type, array $credentials)
+    public function __construct(string $type = null, array $credentials = null)
     {
-        if ($credentials == null) {
-            throw new AuthException('Empty credentials not allowed');
+        $type && $this->setType($type);
+        $credentials && $this->setCredentials($credentials);
+    }
+
+    /**
+     * Set type.
+     * @param  string $type
+     * @return self
+     * @since  4.0
+     */
+    public function setType(string $type): self
+    {
+        $this->type = $type;
+
+        return $this;
+    }
+
+    /**
+     * Get type.
+     * @return ?string
+     * @since  4.0
+     */
+    public function getType(): ?string
+    {
+        return $this->type ?? null;
+    }
+
+    /**
+     * Set credentials.
+     * @param  array<string,string> $credentials
+     * @return self
+     * @since  4.0
+     */
+    public function setCredentials(array $credentials): self
+    {
+        $this->credentials = $credentials;
+
+        return $this;
+    }
+
+    /**
+     * Get credentials.
+     * @return ?array
+     * @since  4.0
+     */
+    public function getCredentials(): ?array
+    {
+        return $this->credentials ?? null;
+    }
+
+    /**
+     * Validate.
+     * @param  ?string $credentials
+     * @return bool
+     * @throws froq\auth\AuthException
+     * @since  4.0
+     */
+    public function validate(?string $credentials): bool
+    {
+        $thisType = $this->getType();
+        $thisCredentials = $this->getCredentials();
+
+        if ($thisCredentials == null) {
+            throw new AuthException('Auth object has no credentials yet, set credentials first '.
+                'before validation');
         }
 
-        $this->type = $type;
-        $this->credentials = $credentials;
+        // Reverse from array if type is basic ($credentials param should be encoded in that case).
+        // Example:
+        // $auth = new Auth('Basic', ['api_key', 'api_secret']);    // not encoded
+        // $auth = new Auth('Basic', ['YXBpX2tleTphcGlfc2VjcmV0']); // encoded
+        // var_dump($auth->validate('YXBpX2tleTphcGlfc2VjcmV0'));
+        if (self::isBasic($thisType)) {
+            $thisCredentials = sscanf($this->toString(), '%[Bb]asic %s');
+            $thisCredentials = $thisCredentials[1];
+        } else {
+            $thisCredentials = $thisCredentials[0];
+        }
+
+        return self::validateCredentials($credentials, $thisCredentials);
     }
 
     /**
-     * Type.
-     * @return string
+     * Validate credentials.
+     * @param  ?string $credentials1
+     * @param  ?string $credentials2
+     * @return bool
      * @since  4.0
      */
-    public function type(): string
+    public static function validateCredentials(?string $credentials1, ?string $credentials2): bool
     {
-        return $this->type;
-    }
-
-    /**
-     * Credentials.
-     * @return array
-     * @since  4.0
-     */
-    public function credentials(): array
-    {
-        return $this->credentials;
+        return $credentials1 && $credentials2 && hash_equals($credentials1, $credentials2);
     }
 
     /**
@@ -105,16 +170,19 @@ final class Auth implements Stringable
      */
     public function toString(): string
     {
-        $ret = $this->type;
+        $type = $this->getType();
+        $credentials = $this->getCredentials();
 
-        if (ucfirst(strtolower($this->type)) == self::TYPE_BASIC) {
-            $credentials = $this->credentials[0];
-            if (isset($this->credentials[1])) {
-                $credentials .= ':'. $this->credentials[1];
+        $ret = ''. $type;
+
+        if ($credentials != null) {
+            if (self::isBasic($type) && isset($credentials[0], $credentials[1])) {
+                // Eg: 'api_key:api_secret'.
+                $ret .= ' '. base64_encode($credentials[0] .':'. $credentials[1]);
+            } else {
+                // Eg: 'api_key'.
+                $ret .= ' '. $credentials[0];
             }
-            $ret .= ' '. base64_encode($credentials);
-        } else {
-            $ret .= ' '. $this->credentials[0];
         }
 
         return $ret;
@@ -124,18 +192,18 @@ final class Auth implements Stringable
      * Parse.
      * @param  string $input
      * @param  bool   $decodeBasicCredentials
-     * @return array<string,string|null>
+     * @return array<string|null,string|null>
      */
     public static function parse(string $input, bool $decodeBasicCredentials = true): array
     {
-        // Resources;
+        // Resources:
         // @link https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization
         // @link https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authorization
-        // available types;
+        // Available types:
         // @link https://www.iana.org/assignments/http-authschemes/http-authschemes.xhtml
         // @link https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-auth-using-authorization-header.html
 
-        // All accepted;
+        // All accepted:
         // 'YWxhZGRpbjpvcGVuc2VzYW1l'
         // 'Authorization: YWxhZGRpbjpvcGVuc2VzYW1l'
         // 'Authorization: Basic YWxhZGRpbjpvcGVuc2VzYW1l'
@@ -149,8 +217,7 @@ final class Auth implements Stringable
         $credentials = ($match[2] ?? '') ?: null;
 
         // Basic authorizations only, normally..
-        if ($decodeBasicCredentials && $credentials != null && $type != null &&
-            ucfirst(strtolower($type)) == self::TYPE_BASIC) {
+        if ($decodeBasicCredentials && $credentials != null && self::isBasic($type)) {
             $credentials = base64_decode($credentials);
         }
 
@@ -168,10 +235,19 @@ final class Auth implements Stringable
     {
         [$type, $credentials] = self::parse($input, $decodeBasicCredentials);
 
-        if ($credentials != null && strchr($credentials, ':') != false) {
-            $credentials = explode(':', $credentials, 2);
-        }
-
         return new Auth((string) $type, (array) $credentials);
     }
+
+    /**
+     * Is basic.
+     * @param  ?string $type
+     * @return bool
+     * @since  4.0
+     * @internal
+     */
+    private static function isBasic(?string $type): bool
+    {
+        return strtolower((string) $type) == 'basic';
+    }
 }
+
