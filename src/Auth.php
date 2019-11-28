@@ -57,15 +57,15 @@ final class Auth implements Stringable
 
     /**
      * Credentials.
-     * @var   array<string,string>
+     * @var   array<string, string>
      * @since 4.0
      */
     private array $credentials;
 
     /**
      * Constructor.
-     * @param  string|null               $type
-     * @param  array<string,string>|null $credentials
+     * @param  string|null                $type
+     * @param  array<string, string>|null $credentials
      * @since  4.0
      */
     public function __construct(string $type = null, array $credentials = null)
@@ -99,7 +99,7 @@ final class Auth implements Stringable
 
     /**
      * Set credentials.
-     * @param  array<string,string> $credentials
+     * @param  array<string, string> $credentials
      * @return self
      * @since  4.0
      */
