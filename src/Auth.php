@@ -192,7 +192,7 @@ final class Auth implements Stringable
      * Parse.
      * @param  string $input
      * @param  bool   $decodeBasicCredentials
-     * @return array<string|null,string|null>
+     * @return array<string|null, string|null>
      */
     public static function parse(string $input, bool $decodeBasicCredentials = true): array
     {
