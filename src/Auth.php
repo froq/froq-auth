@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace froq\auth;
 
-use froq\inters\Stringable;
+use froq\interfaces\Stringable;
 use froq\auth\AuthException;
 
 /**
@@ -165,7 +165,7 @@ final class Auth implements Stringable
     }
 
     /**
-     * @inheritDoc froq\inters\Stringable
+     * @inheritDoc froq\interfaces\Stringable
      *
      * @since      4.0
      */
